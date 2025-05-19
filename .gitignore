@@ -1,3 +1,9 @@
+#prim3 program data
+mersenne_web.log
+mersenne_debug.log
+mersenne_client.log
+mersenne_config.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
