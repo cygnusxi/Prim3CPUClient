@@ -62,6 +62,6 @@ If any provision of this Agreement is held to be invalid or unenforceable, such 
 16. Waiver:
 No waiver of any provision of this Agreement shall be effective unless in writing and signed by the Licensor.
 17. Contact Information:
-Any questions or requests concerning this License should be directed to: [Your Company Contact Information, e.g., email, address]
+Any questions or requests concerning this License should be directed to: info #a#t curecoin.net
 Addendum:
 Any exceptions to section 6 must be requested in writing to the Licensor and may be granted at the Licensor's sole discretion.

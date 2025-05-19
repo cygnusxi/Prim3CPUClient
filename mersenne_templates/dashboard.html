@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mersenne Prime Search - Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .header {
+            background-color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            color: #1a73e8;
+            margin: 0;
+        }
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .stat-card h3 {
+            color: #333;
+            margin: 0 0 1rem 0;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1a73e8;
+        }
+        .controls {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        .control-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        button {
+            background-color: #1a73e8;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #1557b0;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        button.stop {
+            background-color: #d93025;
+        }
+        button.stop:hover {
+            background-color: #b31412;
+        }
+        select {
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .status {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+        .status.running {
+            color: #0f9d58;
+        }
+        .status.stopped {
+            color: #d93025;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>Mersenne Prime Search</h1>
+            <div class="user-info">
+                Welcome, {{ username }}
+            </div>
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-card">
+                <h3>Tasks Completed</h3>
+                <div class="stat-value" id="tasks-completed">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Current Tasks</h3>
+                <div class="stat-value" id="current-tasks">None</div>
+            </div>
+            <div class="stat-card">
+                <h3>Processing Speed</h3>
+                <div class="stat-value" id="processing-speed">0.00 tasks/hour</div>
+            </div>
+            <div class="stat-card">
+                <h3>Running Time</h3>
+                <div class="stat-value" id="running-time">0h 0m 0s</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="cores">CPU Cores:</label>
+                <select id="cores">
+                    {% for i in range(1, max_cores + 1) %}
+                    <option value="{{ i }}" {% if i == cores_to_use %}selected{% endif %}>{{ i }}</option>
+                    {% endfor %}
+                </select>
+                <button onclick="setCores()">Update Cores</button>
+            </div>
+            <div class="control-group">
+                <button id="toggle-button" onclick="toggleProcessing()">Start Processing</button>
+                <div class="status" id="status">Stopped</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isRunning = false;
+
+        function updateStats() {
+            fetch('/stats')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('tasks-completed').textContent = data.tasks_completed;
+                    
+                    // Update current tasks display
+                    const currentTasksElement = document.getElementById('current-tasks');
+                    if (data.current_tasks && data.current_tasks.length > 0) {
+                        currentTasksElement.textContent = data.current_tasks.join(', ');
+                    } else {
+                        currentTasksElement.textContent = 'None';
+                    }
+                    
+                    // Update processing speed and running time
+                    document.getElementById('processing-speed').textContent = 
+                        `${data.processing_speed.toFixed(2)} tasks/hour`;
+                    document.getElementById('running-time').textContent = data.running_time;
+                    
+                    // Update status
+                    isRunning = data.is_running;
+                    const status = document.getElementById('status');
+                    const toggleButton = document.getElementById('toggle-button');
+                    
+                    if (isRunning) {
+                        status.textContent = 'Running';
+                        status.className = 'status running';
+                        toggleButton.textContent = 'Stop Processing';
+                        toggleButton.className = 'stop';
+                    } else {
+                        status.textContent = 'Stopped';
+                        status.className = 'status stopped';
+                        toggleButton.textContent = 'Start Processing';
+                        toggleButton.className = '';
+                    }
+                })
+                .catch(error => console.error('Error fetching stats:', error));
+        }
+
+        function toggleProcessing() {
+            fetch('/toggle_processing', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Error:', data.error);
+                } else {
+                    updateStats();
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function setCores() {
+            const cores = document.getElementById('cores').value;
+            fetch('/set_cores', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ cores: parseInt(cores) })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Error:', data.error);
+                } else {
+                    console.log('Cores updated successfully');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Update stats every 2 seconds
+        setInterval(updateStats, 2000);
+        // Initial update
+        updateStats();
+    </script>
+</body>
+</html> 
