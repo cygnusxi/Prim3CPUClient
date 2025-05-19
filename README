@@ -1,0 +1,75 @@
+# Mersenne Prime Search CPU Client
+
+A distributed computing client for searching Mersenne prime numbers. This client allows users to contribute their CPU power to the search for these special prime numbers.
+
+## Features
+
+- Web-based interface for easy monitoring and control
+- Multi-core CPU support for efficient processing
+- Real-time statistics and progress tracking
+- Configurable number of CPU cores
+- Persistent configuration saving
+- Automatic task distribution and management
+
+## System Requirements
+
+- Windows 10 or later
+- 64-bit operating system
+- 2GB RAM minimum
+- Internet connection
+
+## Installation
+
+### Using the Executable
+
+1. Download the latest release from the releases page
+2. Extract the ZIP file to your desired location
+3. Run `mersenne_web.exe`
+
+### Using Source Code
+
+1. Clone the repository
+2. Install the required dependencies (see requirements.txt)
+3. Run `python mersenne_web.py`
+
+## Usage
+
+1. Launch the application
+2. Access the web interface at `http://127.0.0.1:5002`
+3. Enter a username (3-20 characters, alphanumeric with underscores)
+4. Configure the number of CPU cores to use
+5. Click "Start Processing" to begin contributing
+
+## Monitoring
+
+The web interface provides real-time information about:
+- Current processing status
+- Number of tasks completed
+- Processing speed
+- Running time
+- Active tasks
+- CPU core usage
+
+## Configuration
+
+The client automatically saves your configuration, including:
+- Username
+- Number of CPU cores to use
+- Processing statistics
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the CureCoin Software License Agreement. See the LICENSE.md file for full details. This license includes specific terms regarding:
+
+Usage restrictions and authorized use
+Modification and derivative work limitations
+Distribution requirements
+Intellectual property rights
+Warranty disclaimers and liability limitations
+Please review the LICENSE.md file carefully before using, modifying, or distributing this software.
+
+CureCoin® 2025
