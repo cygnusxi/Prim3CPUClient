@@ -51,6 +51,9 @@ The client automatically saves your configuration, including:
 - Number of CPU cores to use
 - Processing statistics
 
+## Known Issues
+When you toggle the processing back off, the stats zero out, but the task does finsh with a graceful shutdown. 
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
