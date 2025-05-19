@@ -10,6 +10,7 @@ A distributed computing client for searching Mersenne prime numbers. This client
 - Configurable number of CPU cores
 - Persistent configuration saving
 - Automatic task distribution and management
+- Server and task stats at https://mersenne.curecoin.net/public_stats
 
 ## System Requirements
 
@@ -25,6 +26,12 @@ A distributed computing client for searching Mersenne prime numbers. This client
 1. Download the latest release from the releases page
 2. Extract the ZIP file to your desired location
 3. Run `mersenne_web.exe`
+
+### Using Source Code
+
+1. Clone the repository
+2. Install the required dependencies (see requirements.txt)
+3. Run `python mersenne_web.py` or `python mersenne_web_MT_win.py`
 
 ## Usage
 
