@@ -26,12 +26,6 @@ A distributed computing client for searching Mersenne prime numbers. This client
 2. Extract the ZIP file to your desired location
 3. Run `mersenne_web.exe`
 
-### Using Source Code
-
-1. Clone the repository
-2. Install the required dependencies (see requirements.txt)
-3. Run `python mersenne_web.py`
-
 ## Usage
 
 1. Launch the application
