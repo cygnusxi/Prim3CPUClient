@@ -5,7 +5,7 @@ import json
 import time
 from datetime import datetime
 import multiprocessing
-from mersenne_client_CPU import MersenneCPUClient, parallel_lucas_lehmer_test
+from mersenne_client_CPU import MersenneCPUClient
 
 # Configure logging
 logging.basicConfig(
@@ -27,7 +27,7 @@ app = Flask(__name__,
 )
 
 # App version
-VERSION = "1.2.5"
+VERSION = "1.0.0"
 
 # Create necessary directories
 os.makedirs('mersenne_templates', exist_ok=True)
@@ -108,10 +108,6 @@ def stats():
             # Calculate processing speed and running time
             elapsed_time = time.time() - CLIENT_CONFIG['client'].start_time
             tasks_completed = CLIENT_CONFIG['client'].shared_state['tasks_completed']
-            
-            # Update the global tasks completed count
-            CLIENT_CONFIG['tasks_completed'] = tasks_completed
-            
             processing_speed = (tasks_completed / elapsed_time) * 3600 if elapsed_time > 0 else 0
             
             # Format running time
@@ -141,30 +137,27 @@ def toggle_processing():
         CLIENT_CONFIG['is_running'] = not CLIENT_CONFIG['is_running']
         
         if CLIENT_CONFIG['is_running']:
-            # Always create a new client instance when starting
-            CLIENT_CONFIG['client'] = MersenneCPUClient(
-                server_url="http://workserverm1.curecoin.net:5005",
-                user_id=CLIENT_CONFIG['username'],
-                num_cores=CLIENT_CONFIG['cores_to_use']
-            )
+            # Initialize client if not exists
+            if not CLIENT_CONFIG['client']:
+                CLIENT_CONFIG['client'] = MersenneCPUClient(
+                    server_url="http://workserverm1.curecoin.net:5005",
+                    user_id=CLIENT_CONFIG['username'],
+                    num_cores=CLIENT_CONFIG['cores_to_use']
+                )
             
-            # Start processing in parallel single task mode
-            CLIENT_CONFIG['client'].run_parallel_single_task()
-            logging.info("Processing started in parallel single task mode")
+            # Start processing
+            CLIENT_CONFIG['client'].run()
+            logging.info("Processing started")
             return jsonify({"status": "started"})
         else:
             # Stop processing
             if CLIENT_CONFIG['client']:
                 CLIENT_CONFIG['client'].shared_state['running'] = False
-                # Clear the client reference after stopping
-                CLIENT_CONFIG['client'] = None
             logging.info("Processing stopped")
             return jsonify({"status": "stopped"})
             
     except Exception as e:
         logging.error(f"Error toggling processing: {e}")
-        CLIENT_CONFIG['is_running'] = False
-        CLIENT_CONFIG['client'] = None
         return jsonify({"error": str(e)}), 500
 
 @app.route('/set_cores', methods=['POST'])
@@ -189,7 +182,7 @@ def main():
         load_config()
         
         # Print startup message
-        print("\n=== Mersenne Prime Search Client (Parallel Single Task Mode) ===")
+        print("\n=== Mersenne Prime Search Client ===")
         print(f"Version: {VERSION}")
         print("\nAccess the web interface at:")
         print("http://127.0.0.1:5002")

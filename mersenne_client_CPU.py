@@ -34,53 +34,28 @@ def create_session():
     session.mount("https://", adapter)
     return session
 
-def process_chunk(chunk_id, p, num_cores, shared_dict):
-    """Process a chunk of the Lucas-Lehmer test using RNS principles"""
+def lucas_lehmer_test_cpu(p):
+    """
+    CPU implementation of the Lucas-Lehmer test for Mersenne numbers.
+    Uses gmpy2 for arbitrary-precision arithmetic with optimizations.
+    """
+    # First check if p is prime (necessary condition for Mersenne primes)
+    #Removing this check permenantly because the server will handle this
+    #if not is_prime(p):
+    #    return False
+        
+    # Calculate 2^p - 1
     mersenne = gmpy2.mpz(2)**p - 1
-    chunk_size = (p - 1) // num_cores
     
-    start = chunk_id * chunk_size + 1
-    end = start + chunk_size if chunk_id < num_cores - 1 else p
+    # Initialize s = 4
+    s = gmpy2.mpz(4)
     
-    # Get initial value from previous chunk or 4 if first chunk
-    s = gmpy2.mpz(4) if chunk_id == 0 else shared_dict.get(f'result_{chunk_id-1}', 4)
-    
-    # Process chunk with early exit check
-    for i in range(start, end):
-        s = (s * s) % mersenne
-        s = (s - 2) % mersenne
-        if s == 0:
-            shared_dict['found_prime'] = True
-            return True
-            
-    # Store result for next chunk
-    shared_dict[f'result_{chunk_id}'] = s
-    return False
-
-def parallel_lucas_lehmer_test(p, num_cores):
-    """Parallel implementation of the Lucas-Lehmer test using RNS principles"""
-    if not is_prime(p):
-        return False
+    # For i from 1 to p-2, compute s = (s^2 - 2) mod mersenne
+    for i in range(1, p-1):
+        s = (s * s - gmpy2.mpz(2)) % mersenne
         
-    # Create a manager for shared data
-    manager = Manager()
-    shared_dict = manager.dict()
-    shared_dict['found_prime'] = False
-    
-    # Create process pool
-    with ProcessPoolExecutor(max_workers=num_cores) as executor:
-        futures = [
-            executor.submit(process_chunk, i, p, num_cores, shared_dict)
-            for i in range(num_cores)
-        ]
-        
-        # Check results
-        for future in futures:
-            if future.result() or shared_dict['found_prime']:
-                return True
-                
-    # Check final result
-    return shared_dict.get(f'result_{num_cores-1}', 0) == 0
+    # If s = 0, then 2^p - 1 is prime
+    return s == 0
 
 def is_prime(n):
     """
@@ -128,7 +103,7 @@ def worker_process(core_id, server_url, user_id, shared_state):
                 task_id = task["task_id"]
                 
                 # Use CPU-only Lucas-Lehmer test
-                is_prime = parallel_lucas_lehmer_test(exponent, shared_state['num_cores'])
+                is_prime = lucas_lehmer_test_cpu(exponent)
                 
                 # Submit result
                 if is_prime:
@@ -199,7 +174,6 @@ class MersenneCPUClient:
         self.shared_state['running'] = True
         self.shared_state['errors'] = self.manager.dict({i: 0 for i in range(num_cores)})
         self.shared_state['last_update'] = time.time()
-        self.shared_state['num_cores'] = num_cores
         
         # Create process pool with context manager
         self.process_pool = ProcessPoolExecutor(max_workers=num_cores)
@@ -268,103 +242,6 @@ class MersenneCPUClient:
             # Ensure proper cleanup
             self.process_pool.shutdown(wait=True)
 
-    def run_parallel_single_task(self):
-        """Run in parallel single task mode where all cores work on one task"""
-        try:
-            session = create_session()
-            error_count = 0
-            max_errors = 5
-            backoff_time = 10
-            
-            while self.shared_state['running']:
-                try:
-                    # Fetch single task
-                    response = session.get(
-                        f"{self.server_url}/get_mersenne_task",
-                        params={"user_id": self.user_id, "gpu_available": True},
-                        timeout=30
-                    )
-                    response.raise_for_status()
-                    task = response.json()
-                    
-                    if task:
-                        # Update task status
-                        for core_id in range(self.num_cores):
-                            self.shared_state['current_tasks'][core_id] = task.copy()
-                        
-                        exponent = task["exponent"]
-                        task_id = task["task_id"]
-                        
-                        # Use parallel Lucas-Lehmer test with all cores
-                        is_prime = parallel_lucas_lehmer_test(exponent, self.num_cores)
-                        
-                        # Submit result
-                        if is_prime:
-                            value = gmpy2.mpz(2)**exponent - 1
-                            chunks = [str(value)[i:i+1000] for i in range(0, len(str(value)), 1000)]
-                            
-                            result = {
-                                "task_id": task_id,
-                                "exponent": exponent,
-                                "is_prime": True,
-                                "num_digits": value.num_digits(),
-                                "value_chunks": chunks,
-                                "verification_method": "CPU",
-                                "discovered_by": self.user_id,
-                                "verification_status": "VERIFIED",
-                                "value_hash": str(hash(str(value)))
-                            }
-                        else:
-                            result = {
-                                "task_id": task_id,
-                                "exponent": exponent,
-                                "is_prime": False,
-                                "discovered_by": self.user_id,
-                                "verification_status": "NOT_PRIME"
-                            }
-                        
-                        response = session.post(
-                            f"{self.server_url}/submit_mersenne_result",
-                            json=result,
-                            timeout=30
-                        )
-                        response.raise_for_status()
-                        
-                        # Reset error count on successful task
-                        error_count = 0
-                        
-                        # Update completion status
-                        self.shared_state['tasks_completed'] += 1
-                        for core_id in range(self.num_cores):
-                            self.shared_state['current_tasks'][core_id] = None
-                        
-                except requests.exceptions.RequestException as e:
-                    error_count += 1
-                    logging.error(f"Network error: {e}")
-                    if error_count >= max_errors:
-                        logging.error("Too many errors, stopping client")
-                        break
-                    time.sleep(backoff_time * error_count)
-                except Exception as e:
-                    error_count += 1
-                    logging.error(f"Error: {e}")
-                    if error_count >= max_errors:
-                        logging.error("Too many errors, stopping client")
-                        break
-                    time.sleep(backoff_time * error_count)
-                
-                # Display progress
-                self.display_progress()
-                
-        except KeyboardInterrupt:
-            print("\nStopping client...")
-            self.shared_state['running'] = False
-        except Exception as e:
-            logging.error(f"Error in main process: {e}")
-            self.shared_state['running'] = False
-        finally:
-            self.process_pool.shutdown(wait=True)
-
 if __name__ == "__main__":
     print("Mersenne Prime Search")
     print("=====================")
@@ -384,45 +261,15 @@ if __name__ == "__main__":
     # Get CPU core count
     available_cores = multiprocessing.cpu_count()
     print(f"\nAvailable CPU cores: {available_cores}")
-    
-    # Ask for processing mode
     while True:
-        print("\nSelect processing mode:")
-        print("1. Parallel Single Task (All cores work on one task)")
-        print("2. Multiple Tasks (One task per core)")
         try:
-            mode = input("Enter mode (1 or 2): ")
-            if mode in ['1', '2']:
+            num_cores = input(f"Enter number of CPU cores to use (1-{available_cores}): ")
+            num_cores = int(num_cores)
+            if 1 <= num_cores <= available_cores:
                 break
-            print("Please enter 1 or 2")
+            print(f"Please enter a number between 1 and {available_cores}")
         except ValueError:
             print("Please enter a valid number")
-    
-    # Get core count based on mode
-    if mode == '1':
-        print("\nParallel Single Task Mode")
-        print("All selected cores will work together on one task")
-        while True:
-            try:
-                num_cores = input(f"Enter number of CPU cores to use (1-{available_cores}): ")
-                num_cores = int(num_cores)
-                if 1 <= num_cores <= available_cores:
-                    break
-                print(f"Please enter a number between 1 and {available_cores}")
-            except ValueError:
-                print("Please enter a valid number")
-    else:
-        print("\nMultiple Tasks Mode")
-        print("Each core will process a separate task")
-        while True:
-            try:
-                num_cores = input(f"Enter number of CPU cores to use (1-{available_cores}): ")
-                num_cores = int(num_cores)
-                if 1 <= num_cores <= available_cores:
-                    break
-                print(f"Please enter a number between 1 and {available_cores}")
-            except ValueError:
-                print("Please enter a valid number")
     
     # Create and run the client
     print(f"\nConnecting to server at {server_url} as {username}")
@@ -432,12 +279,7 @@ if __name__ == "__main__":
     
     client = MersenneCPUClient(server_url, username, num_cores)
     try:
-        if mode == '1':
-            # Use parallel single task mode
-            client.run_parallel_single_task()
-        else:
-            # Use multiple tasks mode
-            client.run()
+        client.run()
     except KeyboardInterrupt:
         print("\nStopping client...")
-        client.shared_state['running'] = False
+        client.running = False
