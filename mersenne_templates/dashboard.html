@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mersenne Prime Search - Dashboard</title>
+    <title>Prim3three - Mersenne Prime Search</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,43 +11,207 @@
             margin: 0;
             padding: 0;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
+        .blue-header {
+            background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+        .brand {
+            display: flex;
+            flex-direction: column;
+        }
+        .brand h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .tagline {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            margin-top: 0.2rem;
+        }
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            font-size: 0.9rem;
+        }
+        .nav-links a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .connection-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .status-connected { background-color: #0f9d58; }
+        .status-disconnected { background-color: #ea4335; }
+        .status-timeout { background-color: #ff9800; }
+        .status-error { background-color: #ea4335; }
+        
+        .user-info {
+            font-size: 0.9rem;
+        }
+        
         .dashboard-container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 2rem;
+            flex: 1;
         }
-        .header {
+        .page-title {
             background-color: white;
-            padding: 1rem 2rem;
+            padding: 1.5rem 2rem;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             margin-bottom: 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
-        .header h1 {
+        .page-title h2 {
             color: #1a73e8;
             margin: 0;
+            font-size: 2rem;
         }
+        
         .stats-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
+        
+        /* Responsive grid adjustments for better screen utilization */
+        @media (min-width: 768px) {
+            .stats-container {
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .stats-container {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+        }
+        
+        @media (min-width: 1200px) {
+            .stats-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (min-width: 1400px) {
+            .stats-container {
+                grid-template-columns: repeat(4, 1fr);
+                max-width: none;
+            }
+            .dashboard-container {
+                max-width: 1400px;
+            }
+        }
+        
         .stat-card {
             background-color: white;
             padding: 1.5rem;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         .stat-card h3 {
             color: #333;
             margin: 0 0 1rem 0;
         }
         .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1a73e8;
+        }
+        
+        /* Special handling for current tasks card */
+        .current-tasks-card {
+            max-height: 180px;
+            overflow: hidden;
+        }
+        
+        .current-tasks-content {
+            max-height: 120px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+        
+        .current-tasks-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .current-tasks-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        
+        .current-tasks-content::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        
+        .current-tasks-content::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .task-item {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #1a73e8;
+            padding: 0.25rem 0.5rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #1a73e8;
+        }
+        
+        .no-tasks {
             font-size: 2rem;
             font-weight: bold;
             color: #1a73e8;
@@ -88,6 +252,12 @@
         button.stop:hover {
             background-color: #b31412;
         }
+        button.secondary {
+            background-color: #6c757d;
+        }
+        button.secondary:hover {
+            background-color: #545b62;
+        }
         select {
             padding: 0.75rem;
             border: 1px solid #ddd;
@@ -104,15 +274,108 @@
         .status.stopped {
             color: #d93025;
         }
+        .error-info {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .error-info.show {
+            display: block;
+        }
+        .error-text {
+            color: #856404;
+            margin: 0;
+        }
+        .debug-section {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        .logs-container {
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 1rem;
+        }
+        .tab {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            border-bottom-color: #1a73e8;
+            color: #1a73e8;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .footer {
+            background-color: white;
+            padding: 1rem 2rem;
+            border-top: 1px solid #dee2e6;
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: auto;
+        }
+        .footer a {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <div class="header">
-            <h1>Mersenne Prime Search</h1>
-            <div class="user-info">
-                Welcome, {{ username }}
+    <div class="blue-header">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="brand">
+                    <h1>Prim3Three</h1>
+                    <div class="tagline">by Cygnus Codeworks</div>
+                </div>
+                <div class="nav-links">
+                    <a href="https://mersenne.curecoin.net/user_stats" target="_blank">User Stats</a>
+                    <a href="https://mersenne.curecoin.net/public_stats" target="_blank">Public Stats</a>
+                    <a href="https://mersenne.curecoin.net/benchmark_stats" target="_blank">Benchmark Stats</a>
+                </div>
             </div>
+            <div class="header-right">
+                <div class="connection-info">
+                    <div class="status-indicator status-{{ connection_status }}" id="connection-indicator"></div>
+                    <span id="connection-text">{{ connection_status.title() }}</span>
+                </div>
+                <div class="user-info">Welcome, {{ username }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <div class="page-title">
+            <h2>Mersenne Prime Search</h2>
+        </div>
+
+        <div class="error-info" id="error-info">
+            <p class="error-text" id="error-text"></p>
         </div>
 
         <div class="stats-container">
@@ -120,9 +383,13 @@
                 <h3>Tasks Completed</h3>
                 <div class="stat-value" id="tasks-completed">0</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card current-tasks-card">
                 <h3>Current Tasks</h3>
-                <div class="stat-value" id="current-tasks">None</div>
+                <div class="current-tasks-content">
+                    <div class="task-list" id="current-tasks-content">
+                        <div class="no-tasks">No tasks running</div>
+                    </div>
+                </div>
             </div>
             <div class="stat-card">
                 <h3>Processing Speed</h3>
@@ -131,6 +398,14 @@
             <div class="stat-card">
                 <h3>Running Time</h3>
                 <div class="stat-value" id="running-time">0h 0m 0s</div>
+            </div>
+            <div class="stat-card">
+                <h3>Connection Status</h3>
+                <div class="stat-value" id="connection-status">{{ connection_status.title() }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Error Count</h3>
+                <div class="stat-value" id="error-count">0</div>
             </div>
         </div>
 
@@ -148,11 +423,35 @@
                 <button id="toggle-button" onclick="toggleProcessing()">Start Processing</button>
                 <div class="status" id="status">Stopped</div>
             </div>
+            <div class="control-group">
+                <button class="secondary" onclick="testConnection()">Test Connection</button>
+                <button class="secondary" onclick="toggleLogs()">Show/Hide Logs</button>
+            </div>
         </div>
+
+        <div class="debug-section" id="debug-section" style="display: none;">
+            <h3>Debug Information</h3>
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('web-logs')">Web Interface</div>
+                <div class="tab" onclick="showTab('network-logs')">Network</div>
+            </div>
+            <div class="tab-content active" id="web-logs">
+                <div class="logs-container" id="web-logs-content">Loading...</div>
+            </div>
+            <div class="tab-content" id="network-logs">
+                <div class="logs-container" id="network-logs-content">Loading...</div>
+            </div>
+            <button onclick="refreshLogs()" style="margin-top: 1rem;">Refresh Logs</button>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2024 Prim3three by Cygnus Codeworks. Powered by <a href="https://curecoin.net" target="_blank">Curecoin®</a> Mersenne Prime Search Network.</p>
     </div>
 
     <script>
         let isRunning = false;
+        let logsVisible = false;
 
         function updateStats() {
             fetch('/stats')
@@ -161,17 +460,48 @@
                     document.getElementById('tasks-completed').textContent = data.tasks_completed;
                     
                     // Update current tasks display
-                    const currentTasksElement = document.getElementById('current-tasks');
+                    const currentTasksElement = document.getElementById('current-tasks-content');
                     if (data.current_tasks && data.current_tasks.length > 0) {
-                        currentTasksElement.textContent = data.current_tasks.join(', ');
+                        const taskList = document.createElement('div');
+                        taskList.className = 'task-list';
+                        data.current_tasks.forEach(task => {
+                            const taskItem = document.createElement('div');
+                            taskItem.className = 'task-item';
+                            taskItem.textContent = task;
+                            taskList.appendChild(taskItem);
+                        });
+                        currentTasksElement.innerHTML = '';
+                        currentTasksElement.appendChild(taskList);
                     } else {
-                        currentTasksElement.textContent = 'None';
+                        currentTasksElement.innerHTML = '<div class="no-tasks">No tasks running</div>';
                     }
                     
                     // Update processing speed and running time
                     document.getElementById('processing-speed').textContent = 
                         `${data.processing_speed.toFixed(2)} tasks/hour`;
                     document.getElementById('running-time').textContent = data.running_time;
+                    
+                    // Update connection status
+                    const connectionIndicator = document.getElementById('connection-indicator');
+                    const connectionText = document.getElementById('connection-text');
+                    const connectionStatus = document.getElementById('connection-status');
+                    
+                    connectionIndicator.className = `status-indicator status-${data.connection_status}`;
+                    connectionText.textContent = data.connection_status.charAt(0).toUpperCase() + data.connection_status.slice(1);
+                    connectionStatus.textContent = data.connection_status.charAt(0).toUpperCase() + data.connection_status.slice(1);
+                    
+                    // Update error count
+                    document.getElementById('error-count').textContent = data.error_count || 0;
+                    
+                    // Show error info if there's an error
+                    const errorInfo = document.getElementById('error-info');
+                    const errorText = document.getElementById('error-text');
+                    if (data.last_error) {
+                        errorText.textContent = `Last Error: ${data.last_error}`;
+                        errorInfo.classList.add('show');
+                    } else {
+                        errorInfo.classList.remove('show');
+                    }
                     
                     // Update status
                     isRunning = data.is_running;
@@ -190,10 +520,20 @@
                         toggleButton.className = '';
                     }
                 })
-                .catch(error => console.error('Error fetching stats:', error));
+                .catch(error => {
+                    console.error('Error fetching stats:', error);
+                    // Show connection error in UI
+                    const errorInfo = document.getElementById('error-info');
+                    const errorText = document.getElementById('error-text');
+                    errorText.textContent = `Connection Error: ${error.message}`;
+                    errorInfo.classList.add('show');
+                });
         }
 
         function toggleProcessing() {
+            const toggleButton = document.getElementById('toggle-button');
+            toggleButton.disabled = true;
+            
             fetch('/toggle_processing', {
                 method: 'POST',
                 headers: {
@@ -204,11 +544,18 @@
             .then(data => {
                 if (data.error) {
                     console.error('Error:', data.error);
+                    alert(`Error: ${data.error}`);
                 } else {
                     updateStats();
                 }
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                console.error('Error:', error);
+                alert(`Network Error: ${error.message}`);
+            })
+            .finally(() => {
+                toggleButton.disabled = false;
+            });
         }
 
         function setCores() {
@@ -224,11 +571,76 @@
             .then(data => {
                 if (data.error) {
                     console.error('Error:', data.error);
+                    alert(`Error: ${data.error}`);
                 } else {
                     console.log('Cores updated successfully');
                 }
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                console.error('Error:', error);
+                alert(`Network Error: ${error.message}`);
+            });
+        }
+
+        function testConnection() {
+            fetch('/test_connection', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Connection test successful!');
+                } else {
+                    alert(`Connection test failed: ${data.message}`);
+                }
+                updateStats();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(`Connection test failed: ${error.message}`);
+            });
+        }
+
+        function toggleLogs() {
+            const debugSection = document.getElementById('debug-section');
+            logsVisible = !logsVisible;
+            debugSection.style.display = logsVisible ? 'block' : 'none';
+            if (logsVisible) {
+                refreshLogs();
+            }
+        }
+
+        function refreshLogs() {
+            fetch('/logs')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('web-logs-content').textContent = data['Web Interface'] || 'No logs available';
+                    document.getElementById('network-logs-content').textContent = data['Network'] || 'No logs available';
+                })
+                .catch(error => {
+                    console.error('Error fetching logs:', error);
+                    document.getElementById('web-logs-content').textContent = `Error loading logs: ${error.message}`;
+                    document.getElementById('network-logs-content').textContent = `Error loading logs: ${error.message}`;
+                });
+        }
+
+        function showTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
         }
 
         // Update stats every 2 seconds
