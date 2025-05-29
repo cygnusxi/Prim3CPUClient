@@ -45,7 +45,7 @@ app = Flask(__name__,
 )
 
 # App version
-VERSION = "1.2.1"
+VERSION = "1.2.2"
 
 # Create necessary directories
 os.makedirs('mersenne_templates', exist_ok=True)

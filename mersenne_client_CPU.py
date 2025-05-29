@@ -81,7 +81,7 @@ def worker_process(core_id, server_url, user_id, shared_state):
     """Worker process function that runs independently"""
     session = create_session()
     error_count = 0
-    max_errors = 5
+    max_errors = 700
     backoff_time = 10
     
     while shared_state['running']:
